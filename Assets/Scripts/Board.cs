@@ -87,6 +87,7 @@ public class Board : MonoBehaviour
         if (startTile != null && endTile != null && IsCloseTo(startTile, endTile))
         {
             SwapTiles();
+            CheckMatch();
         }
     }
 
@@ -111,6 +112,55 @@ public class Board : MonoBehaviour
         if (Math.Abs(start.y - end.y) == 1 && start.x == end.x)
         {
             return true;
+        }
+        return false;
+    }
+
+    public bool CheckMatch()
+    {
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                if (x + 1 < width && x - 1 > 0)
+                {
+                    if (pieces[x, y].pieceType == pieces[x + 1, y].pieceType && pieces[x, y].pieceType == pieces[x - 1, y].pieceType)
+                    {
+                        if (pieces[x + 1, y].gameObject != null)
+                        {
+                            Destroy(pieces[x + 1, y].gameObject);
+                        }
+                        if (pieces[x - 1, y].gameObject != null)
+                        {
+                            Destroy(pieces[x - 1, y].gameObject);
+                        }
+                        if (pieces[x, y].gameObject != null)
+                        {
+                            Destroy(pieces[x, y].gameObject);
+                        }
+                        return true;
+                    }
+                }
+                if (y + 1 < height && y - 1 > 0)
+                {
+                    if (pieces[x, y].pieceType == pieces[x, y + 1].pieceType && pieces[x, y].pieceType == pieces[x, y - 1].pieceType)
+                    {
+                        if (pieces[x, y + 1].gameObject != null)
+                        {
+                            Destroy(pieces[x, y + 1].gameObject);
+                        }
+                        if (pieces[x, y - 1].gameObject != null)
+                        {
+                            Destroy(pieces[x, y - 1].gameObject);
+                        }
+                        if (pieces[x, y].gameObject != null)
+                        {
+                            Destroy(pieces[x, y].gameObject);
+                        }
+                        return true;
+                    }
+                }
+            }
         }
         return false;
     }
