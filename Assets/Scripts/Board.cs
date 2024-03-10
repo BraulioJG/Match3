@@ -45,6 +45,11 @@ public class Board : MonoBehaviour
                 pieces[x, y]?.Setup(x, y, this);
             }
         }
+        if (CheckMatchNonDestructive())
+        {
+            DeleteAllPieces();
+            SetupPieces();
+        }
     }
 
     private void SetupBoard()
@@ -87,7 +92,7 @@ public class Board : MonoBehaviour
         if (startTile != null && endTile != null && IsCloseTo(startTile, endTile))
         {
             SwapTiles();
-            CheckMatch();
+            CheckMatchDestructive();
         }
     }
 
@@ -100,6 +105,18 @@ public class Board : MonoBehaviour
         EndPiece.Move(startTile.x, startTile.y);
 
         pieces[startTile.x,startTile.y] = EndPiece;
+        pieces[endTile.x, endTile.y] = StartPiece;
+    }
+
+    private void SwapTiles(Tile startTile, Tile endTile)
+    {
+        var StartPiece = pieces[startTile.x, startTile.y];
+        var EndPiece = pieces[endTile.x, endTile.y];
+
+        StartPiece.Move(endTile.x, endTile.y);
+        EndPiece.Move(startTile.x, startTile.y);
+
+        pieces[startTile.x, startTile.y] = EndPiece;
         pieces[endTile.x, endTile.y] = StartPiece;
     }
 
@@ -116,13 +133,13 @@ public class Board : MonoBehaviour
         return false;
     }
 
-    public bool CheckMatch()
+    public bool CheckMatchDestructive()
     {
         for (int y = 0; y < height; y++)
         {
             for (int x = 0; x < width; x++)
             {
-                if (x + 1 < width && x - 1 > 0)
+                if (x + 1 < width && x - 1 >= 0)
                 {
                     if (pieces[x, y].pieceType == pieces[x + 1, y].pieceType && pieces[x, y].pieceType == pieces[x - 1, y].pieceType)
                     {
@@ -138,10 +155,11 @@ public class Board : MonoBehaviour
                         {
                             Destroy(pieces[x, y].gameObject);
                         }
+                        DownRowXMatch(x, y);
                         return true;
                     }
                 }
-                if (y + 1 < height && y - 1 > 0)
+                if (y + 1 < height && y - 1 >= 0)
                 {
                     if (pieces[x, y].pieceType == pieces[x, y + 1].pieceType && pieces[x, y].pieceType == pieces[x, y - 1].pieceType)
                     {
@@ -157,6 +175,7 @@ public class Board : MonoBehaviour
                         {
                             Destroy(pieces[x, y].gameObject);
                         }
+                        DownRowYMatch(x, y);
                         return true;
                     }
                 }
@@ -164,4 +183,96 @@ public class Board : MonoBehaviour
         }
         return false;
     }
+
+    public bool CheckMatchNonDestructive()
+    {
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                if (x + 1 < width && x - 1 >= 0)
+                {
+                    if (pieces[x, y].pieceType == pieces[x + 1, y].pieceType && pieces[x, y].pieceType == pieces[x - 1, y].pieceType)
+                    {
+                        return true;
+                    }
+                }
+                if (y + 1 < height && y - 1 >= 0)
+                {
+                    if (pieces[x, y].pieceType == pieces[x, y + 1].pieceType && pieces[x, y].pieceType == pieces[x, y - 1].pieceType)
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    public bool DeleteAllPieces()
+    {
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                Destroy(pieces[x, y].gameObject);
+            }
+        }
+        return false;
+    }
+
+    public void DownRowYMatch(int x, int yLimit)
+    {
+        for (yLimit = yLimit + 2; yLimit < height; yLimit++)
+        {
+            pieces[x, yLimit].Move(x, yLimit - 3);
+            SwapTiles(tiles[x, yLimit], tiles[x, yLimit - 3]);
+        }
+        var selectedPiece1 = availablePieces[UnityEngine.Random.Range(0, availablePieces.Length)];
+        var o1 = Instantiate(selectedPiece1, new Vector3(x, height - 3, -5), Quaternion.identity);
+        o1.transform.parent = transform;
+        pieces[x, height - 3] = o1.GetComponent<Piece>();
+        pieces[x, height - 3]?.Setup(x, height - 3, this);
+        var selectedPiece2 = availablePieces[UnityEngine.Random.Range(0, availablePieces.Length)];
+        var o2 = Instantiate(selectedPiece2, new Vector3(x, height - 2, -5), Quaternion.identity);
+        o2.transform.parent = transform;
+        pieces[x, height - 2] = o2.GetComponent<Piece>();
+        pieces[x, height - 2]?.Setup(x, height - 2, this);
+        var selectedPiece3 = availablePieces[UnityEngine.Random.Range(0, availablePieces.Length)];
+        var o3 = Instantiate(selectedPiece3, new Vector3(x, height - 1, -5), Quaternion.identity);
+        o3.transform.parent = transform;
+        pieces[x, height - 1] = o3.GetComponent<Piece>();
+        pieces[x, height - 1]?.Setup(x, height - 1, this);
+        CheckMatchDestructive();
+    }
+
+    public void DownRowXMatch(int x, int yLimit)
+    {
+        for (yLimit = yLimit + 1; yLimit < height; yLimit++)
+        {
+            pieces[x, yLimit].Move(x, yLimit - 1);
+            SwapTiles(tiles[x, yLimit], tiles[x, yLimit - 1]);
+            pieces[x - 1, yLimit].Move(x - 1, yLimit - 1);
+            SwapTiles(tiles[x - 1, yLimit], tiles[x - 1, yLimit - 1]);
+            pieces[x + 1, yLimit].Move(x + 1, yLimit - 1);
+            SwapTiles(tiles[x + 1, yLimit], tiles[x + 1, yLimit - 1]);
+        }
+        var selectedPiece1 = availablePieces[UnityEngine.Random.Range(0, availablePieces.Length)];
+        var o1 = Instantiate(selectedPiece1, new Vector3(x, height - 1, -5), Quaternion.identity);
+        o1.transform.parent = transform;
+        pieces[x, height - 1] = o1.GetComponent<Piece>();
+        pieces[x, height - 1]?.Setup(x, height - 1, this);
+        var selectedPiece2 = availablePieces[UnityEngine.Random.Range(0, availablePieces.Length)];
+        var o2 = Instantiate(selectedPiece2, new Vector3(x - 1, height - 1, -5), Quaternion.identity);
+        o2.transform.parent = transform;
+        pieces[x - 1, height - 1] = o2.GetComponent<Piece>();
+        pieces[x - 1, height - 1]?.Setup(x - 1, height - 1, this);
+        var selectedPiece3 = availablePieces[UnityEngine.Random.Range(0, availablePieces.Length)];
+        var o3 = Instantiate(selectedPiece3, new Vector3(x + 1, height - 1, -5), Quaternion.identity);
+        o3.transform.parent = transform;
+        pieces[x + 1, height - 1] = o3.GetComponent<Piece>();
+        pieces[x + 1, height - 1]?.Setup(x + 1, height - 1, this);
+        CheckMatchDestructive();
+    }
+
 }
